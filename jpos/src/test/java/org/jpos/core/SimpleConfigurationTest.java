@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2018 jPOS Software SRL
+ * Copyright (C) 2000-2019 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,22 +18,14 @@
 
 package org.jpos.core;
 
-import static org.jpos.util.Serializer.serialize;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.Assert.*;
 
 import java.io.FileNotFoundException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
-
-// import junitx.util.PrivateAccessor;
-
-import org.jpos.iso.ISOUtil;
 import org.jpos.util.Serializer;
+import org.junit.Ignore;
 import org.junit.Test;
 
 @SuppressWarnings("unchecked")
@@ -457,5 +449,66 @@ public class SimpleConfigurationTest {
         Configuration cfg1 = Serializer.serializeDeserialize(cfg);
         assertEquals("cfg.A should equal cfg1.A", cfg.get("A"), cfg1.get("A"));
         assertEquals ("cfg should equal cfg1", cfg, cfg1);
+    }
+
+    @Test
+    public void testReadSystemProperty () {
+        SimpleConfiguration cfg = new SimpleConfiguration();
+        System.setProperty("jpos.url", "http://jpos.org");
+        cfg.put("host", "${jpos.url}");
+        assertEquals("http://jpos.org", cfg.get("host"));
+        cfg.put("host", "$sys{jpos.url}");
+        assertEquals("http://jpos.org", cfg.get("host"));
+        cfg.put("host", "$env{jpos.url}");
+        assertTrue(cfg.get("host").isEmpty());
+    }
+
+    @Test
+    public void testInvalidProperty() {
+        SimpleConfiguration cfg = new SimpleConfiguration();
+        cfg.put("host", "$invalid{jpos.url}");
+        assertEquals("$invalid{jpos.url}", cfg.get("host"));
+    }
+
+    @Test @Ignore // regexp failing
+    public void testInvalidNested() {
+        SimpleConfiguration cfg = new SimpleConfiguration();
+        cfg.put("invalid", "$invalid{${nested}}");
+        assertEquals("$invalid{${nested}}", cfg.get("invalid"));
+    }
+
+    @Test
+    public void testReadVerbatimProperty () {
+        SimpleConfiguration cfg = new SimpleConfiguration();
+        cfg.put ("verbatim", "$verb{${verbatin.property}}");
+        assertEquals("${verbatin.property}", cfg.get("verbatim"));
+    }
+
+    @Test
+    public void testReadEnvironmentVariable () {
+        SimpleConfiguration cfg = new SimpleConfiguration();
+        cfg.put("home", "$env{HOME}");
+        assertEquals(System.getenv("HOME"), cfg.get("home"));
+        cfg.put("home", "${HOME}");
+        assertEquals(System.getenv("HOME"), cfg.get("home"));
+        cfg.put("home", "$sys{HOME}");
+        assertTrue(cfg.get("home").isEmpty());
+    }
+
+    @Test
+    public void testgetAllProperty() {
+        SimpleConfiguration cfg = new SimpleConfiguration();
+        System.setProperty("jpos.url", "http://jpos.org");
+        cfg.put("host", "${jpos.url}");
+        assertArrayEquals(new String[] { "http://jpos.org" }, cfg.getAll("host"));
+    }
+
+    @Test
+    public void testMultipleProperties() {
+        System.setProperty("jpos.host", "http://jpos.org");
+        System.setProperty("jpos.port", "80");
+        SimpleConfiguration cfg = new SimpleConfiguration();
+        cfg.put ("host", "${jpos.host}:${jpos.port}");
+        assertEquals("http://jpos.org:80", cfg.get("host"));
     }
 }

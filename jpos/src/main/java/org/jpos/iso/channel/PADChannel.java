@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2018 jPOS Software SRL
+ * Copyright (C) 2000-2019 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -31,7 +31,7 @@ import java.io.InterruptedIOException;
 import java.net.ServerSocket;
 
 /**
- * Implements an ISOChannel suitable to be used to connect to an X.25 PAD. 
+ * Implements an ISOChannel suitable to be used to connect to an X.25 PAD.
  *
  * @author  <a href="mailto:apr@cs.com.uy">Alejandro P. Revilla</a>
  * @version $Id$
@@ -75,17 +75,18 @@ public class PADChannel extends BaseChannel {
      * @exception IOException
      * @see ISOPackager
      */
-    public PADChannel (ISOPackager p, ServerSocket serverSocket) 
+    public PADChannel (ISOPackager p, ServerSocket serverSocket)
         throws IOException
     {
         super (p, serverSocket);
         if (delay > 0L)
             ISOUtil.sleep(delay);
     }
+
     @Override
     public ISOMsg receive() throws IOException, ISOException {
         byte[] header = null;
-        ISOMsg m = new ISOMsg ();
+        ISOMsg m = createISOMsg();
         m.setPackager (packager);
         m.setSource (this);
         int hLen = getHeaderLength();
@@ -100,9 +101,9 @@ public class PADChannel extends BaseChannel {
             }
             m.setHeader (header);
             m.setDirection(ISOMsg.INCOMING);
+            evt.addMessage (m);
             m = applyIncomingFilters (m, evt);
             m.setDirection(ISOMsg.INCOMING);
-            evt.addMessage (m);
             cnt[RX]++;
             setChanged();
             notifyObservers(m);
@@ -115,11 +116,11 @@ public class PADChannel extends BaseChannel {
         } catch (InterruptedIOException e) {
             evt.addMessage ("<io-timeout/>");
             throw e;
-        } catch (IOException e) { 
-            if (usable) 
+        } catch (IOException e) {
+            if (usable)
                 evt.addMessage (e);
             throw e;
-        } catch (Exception e) { 
+        } catch (Exception e) {
             evt.addMessage (e);
             throw new ISOException ("unexpected exception", e);
         } finally {

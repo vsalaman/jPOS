@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2018 jPOS Software SRL
+ * Copyright (C) 2000-2019 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -320,6 +320,21 @@ public class ISOUtilTest {
         byte[] result = ISOUtil.bitSet2extendedByte(new BitSet(100));
         assertEquals("result.length", 16, result.length);
         assertEquals("result[0]", (byte) -128, result[0]);
+    }
+
+    @Test
+    public void testShortBitset2Byte() {
+        byte[] expected = ISOUtil.hex2byte("C00000");
+        BitSet b = new BitSet();
+        b.set(1);
+        b.set(2);
+        int configuredLength = 3;
+        int len = configuredLength >= 8 ? b.length()+62 >>6 <<3 : configuredLength;
+        byte[] sb = ISOUtil.bitSet2byte(b, len);
+        BitSet b1 = ISOUtil.byte2BitSet(sb, 0, len << 3);
+        assertEquals(3, len);
+        assertArrayEquals(expected, sb);
+        assertEquals(b, b1);
     }
 
     @Test(expected = NullPointerException.class)

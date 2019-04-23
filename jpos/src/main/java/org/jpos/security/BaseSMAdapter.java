@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2018 jPOS Software SRL
+ * Copyright (C) 2000-2019 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -1890,5 +1890,9 @@ public class BaseSMAdapter
     public byte[] dataDecrypt (SecureDESKey bdk, byte[] clearText) throws SMException {
         throw  new SMException("Operation not supported in: " + this.getClass().getName());
     }
-}
 
+    @Override
+    public SecureDESKey formKEYfromClearComponents(short keyLength, String keyType, String... clearComponents) throws SMException {
+        throw  new SMException("Operation not supported in: " + this.getClass().getName());
+    }
+}

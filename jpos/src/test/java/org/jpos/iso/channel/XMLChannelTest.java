@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2018 jPOS Software SRL
+ * Copyright (C) 2000-2019 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -24,6 +24,7 @@ import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.fail;
 
+import java.io.EOFException;
 import java.net.Proxy;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -210,7 +211,11 @@ public class XMLChannelTest {
     @Test
     public void testStreamReceive() throws Throwable {
         XMLChannel xMLChannel = new XMLChannel(new PostPackager(), new ServerSocket());
-        byte[] result = xMLChannel.streamReceive();
-        assertEquals("result.length", 0, result.length);
+        try {
+            xMLChannel.streamReceive();
+        } catch (EOFException e) {
+            return;
+        }
+        fail ("EOFException should have been raised");
     }
 }

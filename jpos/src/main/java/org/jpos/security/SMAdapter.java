@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2018 jPOS Software SRL
+ * Copyright (C) 2000-2019 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -1323,4 +1323,24 @@ public interface SMAdapter {
      * @return cleartext
      */
     byte[] dataDecrypt (SecureDESKey bdk, byte[] cypherText) throws SMException;
+
+    /**
+     * Forms a key from 3 clear components and returns it encrypted under its corresponding LMK
+     * The corresponding LMK is determined from the keyType
+     * @param keyLength e.g. LENGTH_DES, LENGTH_DES3_2, LENGTH_DES3_3, ..
+     * @param keyType possible values are those defined in the SecurityModule inteface. e.g., ZMK, TMK,...
+     * @param clearComponent up to three HexStrings containing key components
+     * @return forms an SecureDESKey from two clear components
+     * @throws SMException
+     */
+    SecureDESKey formKEYfromClearComponents (short keyLength, String keyType, String... clearComponent) throws SMException;
+    /**
+     * Generates a random clear key component.
+     * @param keyLength
+     * @return clear key componenet
+     * @throws SMException
+     */
+    default String generateClearKeyComponent (short keyLength) throws SMException{
+        throw new SMException("Operation not supported in: " + this.getClass().getName());
+    }
 }

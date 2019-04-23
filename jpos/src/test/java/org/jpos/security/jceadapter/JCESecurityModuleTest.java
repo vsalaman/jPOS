@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2018 jPOS Software SRL
+ * Copyright (C) 2000-2019 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -1704,6 +1704,32 @@ public class JCESecurityModuleTest {
         Assert.assertEquals(pvk.getVariant(), conv.getVariant());
         //TPK and ZPK uses same encription variant
         Assert.assertArrayEquals(tpk.getKeyBytes(), conv.getKeyBytes());
+    }
+
+    @Test
+    public void testFormKeyFromClearComponent() throws Throwable {
+        SecureDESKey sdk = jcesecmod
+          .formKEYfromThreeClearComponents((short) 128,
+            "ZPK",
+            "E09B073B4007541FAB76B04370451031",
+            "4CBF5D51EA8525EF045EFED6E386D9D9",
+            "00000000000000000000000000000000");
+        Assert.assertArrayEquals("1: KeyCheck was " + ISOUtil.hexString(sdk.getKeyCheckValue()), ISOUtil.hex2byte("40D522"), sdk.getKeyCheckValue());
+
+        sdk = jcesecmod
+          .formKEYfromClearComponents((short) 128,
+            "ZPK",
+            "E09B073B4007541FAB76B04370451031",
+            "4CBF5D51EA8525EF045EFED6E386D9D9",
+            "00000000000000000000000000000000");
+        Assert.assertArrayEquals("2: KeyCheck was " + ISOUtil.hexString(sdk.getKeyCheckValue()), ISOUtil.hex2byte("40D522"), sdk.getKeyCheckValue());
+
+        sdk = jcesecmod
+          .formKEYfromClearComponents((short) 128,
+            "ZPK",
+            "E09B073B4007541FAB76B04370451031",
+            "4CBF5D51EA8525EF045EFED6E386D9D9");
+        Assert.assertArrayEquals("3: KeyCheck was " + ISOUtil.hexString(sdk.getKeyCheckValue()), ISOUtil.hex2byte("40D522"), sdk.getKeyCheckValue());
     }
 
 }

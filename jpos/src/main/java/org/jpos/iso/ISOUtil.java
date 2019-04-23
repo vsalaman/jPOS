@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2018 jPOS Software SRL
+ * Copyright (C) 2000-2019 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -1497,15 +1497,16 @@ public class ISOUtil {
         return bd.movePointLeft(pow).doubleValue();
     }
 
+
     /**
-     * Converts a string[] into a comma-delimited String.
+     * Converts a string[] or multiple strings into one comma-delimited String.
      *
      * Takes care of escaping commas using a backlash
      * @see org.jpos.iso.ISOUtil#commaDecode(String)
      * @param ss string array to be comma encoded
      * @return comma encoded string
      */
-    public static String commaEncode (String[] ss) {
+    public static String commaEncode (String... ss) {
         StringBuilder sb = new StringBuilder();
         for (String s : ss) {
             if (sb.length() > 0)
