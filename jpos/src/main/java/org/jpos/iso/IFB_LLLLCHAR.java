@@ -16,18 +16,32 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-package org.jpos.q2.cli;
+package org.jpos.iso;
 
-import org.jpos.core.Environment;
-import org.jpos.q2.CLICommand;
-import org.jpos.q2.CLIContext;
-import org.jline.terminal.Terminal;
+/**
+ * ISOFieldPackager Binary LLLCHAR
+ *
+ * @author apr@cs.com.uy
+ * @version $Id$
+ * @see ISOComponent
+ */
+public class IFB_LLLLCHAR extends ISOStringFieldPackager {
+    public IFB_LLLLCHAR() {
+        super(NullPadder.INSTANCE, AsciiInterpreter.INSTANCE, BcdPrefixer.LLLL);
+    }
+    /**
+     * @param len - field len
+     * @param description symbolic descrption
+     */
+    public IFB_LLLLCHAR(int len, String description) {
+        super(len, description, NullPadder.INSTANCE, AsciiInterpreter.INSTANCE, BcdPrefixer.LLLL);
+        checkLength(len, 9999);
+    }
 
-@SuppressWarnings("unused")
-public class ENV implements CLICommand {
-    public void exec(CLIContext cli, String[] args) throws Exception {
-        Terminal term = cli.getReader().getTerminal();
-        cli.println ("TERM=" + term.getClass().getSimpleName() + "/" + term.getType());
-        cli.println (Environment.getEnvironment().toString());
+    public void setLength(int len)
+    {
+        checkLength(len, 9999);
+        super.setLength(len);
     }
 }
+

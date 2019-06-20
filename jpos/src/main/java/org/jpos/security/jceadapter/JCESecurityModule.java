@@ -18,7 +18,6 @@
 
 package  org.jpos.security.jceadapter;
 
-import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.javatuples.Pair;
 import org.jpos.core.Configuration;
 import org.jpos.core.ConfigurationException;
@@ -66,7 +65,7 @@ import javax.crypto.Cipher;
  * @version $Revision$ $Date$
  */
 @SuppressWarnings("unchecked")
-public class JCESecurityModule extends BaseSMAdapter {
+public class JCESecurityModule extends BaseSMAdapter<SecureDESKey> {
     /**
      * Pattern representing key type string value.
      */
@@ -411,6 +410,12 @@ public class JCESecurityModule extends BaseSMAdapter {
         return calculateCVV(accountNo,concatKeys(cvkA, cvkB),expDate,serviceCode);
     }
 
+    @Override
+    protected String calculateCVDImpl(String accountNo, SecureDESKey cvkA, SecureDESKey cvkB,
+                                   String expDate, String serviceCode) throws SMException {
+        return calculateCVD(accountNo, concatKeys(cvkA, cvkB), expDate, serviceCode);
+    }
+
     protected void checkCAVVArgs(String upn, String authrc, String sfarc)
             throws SMException {
         if (upn == null)
@@ -446,6 +451,13 @@ public class JCESecurityModule extends BaseSMAdapter {
     }
 
     @Override
+    protected boolean verifyCVVImpl(String accountNo, SecureDESKey cvkA, SecureDESKey cvkB,
+                     String cvv, String expDate, String serviceCode) throws SMException {
+        String result = calculateCVD(accountNo, concatKeys(cvkA, cvkB), expDate, serviceCode);
+        return result.equals(cvv);
+    }
+
+    @Override
     protected boolean verifyCAVVImpl(String accountNo, SecureDESKey cvk, String cavv,
                      String upn, String authrc, String sfarc) throws SMException {
         checkCAVVArgs(upn, authrc,sfarc);
@@ -454,22 +466,35 @@ public class JCESecurityModule extends BaseSMAdapter {
     }
 
     protected String calculatedCVV(String accountNo, SecureDESKey imkac,
-                     Date expDate, String serviceCode, byte[] atc, MKDMethod mkdm)
+                     String expDate, String serviceCode, byte[] atc, MKDMethod mkdm)
                      throws SMException {
 
         if (mkdm==null)
           mkdm = MKDMethod.OPTION_A;
+
         byte[] panpsn = formatPANPSN_dCVD(accountNo, null, mkdm);
         Key mkac = deriveICCMasterKey(decryptFromLMK(imkac), panpsn);
 
         String alteredPAN = ISOUtil.hexString(atc) + accountNo.substring(4);
 
-        return calculateCVV(alteredPAN, mkac, expDate, serviceCode);
+        return calculateCVD(alteredPAN, mkac, expDate, serviceCode);
     }
 
     @Override
     protected boolean verifydCVVImpl(String accountNo, SecureDESKey imkac, String dcvv,
                      Date expDate, String serviceCode, byte[] atc, MKDMethod mkdm)
+                     throws SMException {
+
+        String ed = ISODate.formatDate(expDate, "yyMM");
+        String res = calculatedCVV(accountNo, imkac, ed,
+                serviceCode, atc, mkdm
+        );
+        return res.equals(dcvv);
+    }
+
+    @Override
+    protected boolean verifydCVVImpl(String accountNo, SecureDESKey imkac, String dcvv,
+                     String expDate, String serviceCode, byte[] atc, MKDMethod mkdm)
                      throws SMException {
 
         String res = calculatedCVV(accountNo, imkac, expDate,
