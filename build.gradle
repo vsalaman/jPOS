@@ -6,14 +6,15 @@ allprojects {
 }
 
 subprojects {
-    apply plugin: 'java'
-    apply plugin: 'maven'
+    apply plugin: 'java-library'
+    apply plugin: 'maven-publish'
     apply plugin: 'signing'
     apply plugin: 'pmd'
+    apply plugin: 'jacoco'
     apply plugin: 'project-report'
 
     group = 'org.jpos'
-    version = '2.1.4-SNAPSHOT'
+    version = '2.1.5-SNAPSHOT'
     [ compileJava, compileTestJava, javadoc ]*.options*.encoding = 'UTF-8'
     def isSnapshot = version.contains("SNAPSHOT")
     def mavenCentralRepo = isSnapshot ?
@@ -28,7 +29,7 @@ subprojects {
     targetCompatibility = 1.8
     repositories {
         mavenCentral()
-        maven { url 'http://jpos.org/maven' }
+        maven { url 'https://jpos.org/maven' }
         mavenLocal()
     }
     if (project.hasProperty("lint")) {
@@ -37,74 +38,102 @@ subprojects {
         options.compilerArgs << "-Xlint" 
       } 
     }
-
-    if (JavaVersion.current().isJava8Compatible()) {
-        tasks.withType(Javadoc) {
-          options.addStringOption('Xdoclint:none', '-quiet')
-        }
+    java {
+        withJavadocJar()
+        withSourcesJar()
     }
-
-    def pomConfig = {
-        name 'jPOS Project'
-        description """
+    publishing {
+        publications {
+            mavenJava(MavenPublication) {
+                pom {
+                    name = 'jPOS Project'
+                    description = """
     jPOS is an ISO-8583 based financial transaction 
     library/framework that can be customized and 
     extended in order to implement financial interchanges.
   """
-        url 'http://jpos.org'
-        inceptionYear '1998'
-        organization {
-            name 'jPOS.org'
-            url 'http://jpos.org'
-        }
-        issueManagement {
-            system 'YouTrack'
-            url 'https://jpos.org/issues'
-        }
-        scm {
-            url "http://github.com/jpos/jPOS"
-            connection "scm:git:https://github.com/jpos/jPOS.git"
-            developerConnection "scm:git:git@github.com:jpos/jPOS.git"
-        }
-        licenses {
-            license {
-                name 'GNU AFFERO GENERAL PUBLIC LICENSE'
-                url 'http://www.gnu.org/licenses/agpl-v3.html'
-                comments 'See http://jpos.org/license for more details.'
-                distribution 'repo'
+                    url = "http://jpos.org"
+                    organization {
+                        name = 'jPOS.org'
+                        url = 'http://jpos.org'
+                    }
+                    issueManagement {
+                        system = 'Github Issues'
+                        url = 'https://github.com/jpos/jPOS/issues'
+                    }
+                    scm {
+                        url = "http://github.com/jpos/jPOS"
+                        connection = "scm:git:https://github.com/jpos/jPOS.git"
+                        developerConnection = "scm:git:git@github.com:jpos/jPOS.git"
+                    }
+                    licenses {
+                        license {
+                            name = 'GNU AFFERO GENERAL PUBLIC LICENSE'
+                            url = 'http://www.gnu.org/licenses/agpl-v3.html'
+                            comments = 'See http://jpos.org/license for more details.'
+                            distribution = 'repo'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'jpos-team'
+                            name = 'jPOS Development Team'
+                            email = 'info@jpos.org'
+                        }
+                    }
+                }
+                groupId = 'org.jpos'
+                artifactId = 'jpos'
+                from components.java
             }
         }
-        developers {
-            developer {
-                id 'jpos-team'
-                name 'jPOS Development Team'
-                email 'info@jpos.org'
+        repositories {
+            maven {
+                def releasesRepoUrl = mavenCentralRepo
+                def snapshotsRepoUrl = 'file:///opt/local/maven'
+                url = isSnapshot ? snapshotsRepoUrl : releasesRepoUrl
+                if (!isSnapshot) {
+                    credentials {
+                        if (project.hasProperty("mavenCentralUsername"))
+                            username = mavenCentralUsername
+                        if (project.hasProperty("mavenCentralPassword"))
+                            password = mavenCentralPassword
+                    }
+                }
             }
         }
     }
+
     signing {
         required { !isSnapshot }
-        sign configurations.archives
+        sign publishing.publications.mavenJava
     }
-    configure(install.repositories.mavenInstaller) {
-        pom.project pomConfig
-    }
-    uploadArchives {
-        repositories {
-            mavenDeployer {
-                pom.project pomConfig
-                beforeDeployment { MavenDeployment deployment -> signing.signPom(deployment) }
-                /*
-                repository(url: mavenCentralRepo) {
-                    authentication(userName: mavenCentralUsername, password: mavenCentralPassword)
-                }
-                */
-                repository(url: 'file:///opt/local/maven')
-            }
+
+    javadoc {
+        configure(options) {
+            windowTitle = "jPOS ${project.version}"
+            header = "<b>jPOS ${project.version}</b>"
+            linkSource = true
+            links(
+                'https://docs.oracle.com/javase/8/docs/api'
+            )
+            tags(
+                'apiNote:a:API Note:',
+                'implSpec:a:Implementation Requirements:',
+                'implNote:a:Implementation Note:'
+            )
         }
     }
+
     test {
+        useJUnitPlatform()
+        testLogging {
+            events "passed", "skipped", "failed"
+        }
         systemProperty 'user.language', 'en'
+    }
+    jacoco {
+        toolVersion = '0.8.5'
     }
 }
 

@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -581,11 +581,7 @@ public class Q2 implements FileFilter, Runnable {
                     return false;
                 }
             }
-            String enabledAttribute = rootElement.getAttributeValue("enabled", "true");
-            if ("true".equalsIgnoreCase(enabledAttribute) ||
-                 "yes".equalsIgnoreCase(enabledAttribute) ||
-                enabledAttribute.contains(Environment.getEnvironment().getName()))
-            {
+            if (QFactory.isEnabled(rootElement)) {
                 if (evt != null)
                     evt.addMessage("deploy: " + f.getCanonicalPath());
                 Object obj = factory.instantiate (this, rootElement);
@@ -596,7 +592,7 @@ public class Q2 implements FileFilter, Runnable {
                 );
                 qentry.setInstance (instance);
             } else if (evt != null) {
-                evt.addMessage("deploy ignored (enabled='" + enabledAttribute + "'): " + f.getCanonicalPath());
+                evt.addMessage("deploy ignored (enabled='" + QFactory.getEnabledAttribute(rootElement) + "'): " + f.getCanonicalPath());
             }
         } 
         catch (InstanceAlreadyExistsException e) {
@@ -934,8 +930,12 @@ public class Q2 implements FileFilter, Runnable {
         while (rename.exists()){
             rename = new File(rename.getAbsolutePath()+"."+extension);
         }
-        getLog().warn("Tidying "+f.getAbsolutePath()+" out of the way, by adding ."+extension,"It will be called: "+rename.getAbsolutePath()+" see log above for detail of problem.");
-        f.renameTo(rename);
+        if (f.renameTo(rename)){
+            getLog().warn("Tidying "+f.getAbsolutePath()+" out of the way, by adding ."+extension,"It will be called: "+rename.getAbsolutePath()+" see log above for detail of problem.");
+        }
+        else {
+            getLog().warn("Error Tidying. Could not tidy  "+f.getAbsolutePath()+" out of the way, by adding ."+extension,"It could not be called: "+rename.getAbsolutePath()+" see log above for detail of problem.");
+        }
     }
 
     private void deleteFile (File f, String iuuid) {

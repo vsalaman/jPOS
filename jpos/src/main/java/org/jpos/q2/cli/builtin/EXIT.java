@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,11 +18,12 @@
 
 package org.jpos.q2.cli.builtin;
 
+import org.jpos.q2.CLICommand;
 import org.jpos.q2.CLIContext;
 import org.jpos.q2.CLISubSystem;
 
 @SuppressWarnings("unused")
-public class EXIT implements CLISubSystem {
+public class EXIT implements CLISubSystem, CLICommand {
     @Override
     public String getPrompt(CLIContext ctx, String[] args) {
         return null;
@@ -31,5 +32,10 @@ public class EXIT implements CLISubSystem {
     @Override
     public String[] getCompletionPrefixes(CLIContext ctx, String args[]) {
         return null;
+    }
+
+    @Override
+    public void exec(CLIContext cli, String[] strings) throws Exception {
+        cli.setActiveSubSystem(null);
     }
 }

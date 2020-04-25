@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!DOCTYPE isopackager SYSTEM "./generic-subtag-packager.dtd">
+<!DOCTYPE isopackager PUBLIC
+        "-//jPOS/jPOS Generic Packager DTD 1.0//EN"
+        "http://jpos.org/dtd/generic-packager-1.0.dtd">
 
-<!-- ISO 8583:2003 (ASCII) field descriptions for GenericPackager -->
+<!-- ISO 8583:1993 (ASCII) field descriptions for GenericPackager -->
 
 <isopackager>
   <isofield
@@ -129,35 +131,29 @@
       id="42"
       length="12"
       name="Card Acquirer Id"
-      class="org.jpos.iso.IFA_NUMERIC"/> 
+      class="org.jpos.iso.IFA_NUMERIC"/>
   <isofield
       id="44"
       length="9999"
       name="Additional Response Data Private Use"
-      class="org.jpos.iso.IFA_LLLLCHAR"/>  
+      class="org.jpos.iso.IFA_LLLLCHAR"/>
   <isofield
       id="45"
       length="76"
       name="Track 1 Data"
       class="org.jpos.iso.IFA_LLCHAR"/>
-      
   <isofieldpackager
       id="48"
       length="999"
       name="Additional Data Private Use"
       class="org.jpos.iso.IFA_LLLCHAR"
-      emitBitmap="false"
+      tagSize="2" lenSize="2"
       tagMapper="org.jpos.iso.packager.TaggedFieldPackagerBaseTest$TagMapperImpl"
       packager="org.jpos.iso.packager.GenericTaggedFieldsPackager">
       <isofield
           id="1"
           length="29"
           name="Address Verification (AVS) Request Data"
-          class="org.jpos.iso.IFA_TTLLCHAR"/>
-      <isofield
-          id="2"
-          length="1"
-          name="Address Verification (AVS) Response Data"
           class="org.jpos.iso.IFA_TTLLCHAR"/>
       <isofield
           id="3"
@@ -175,7 +171,6 @@
           name="Transaction Identifier Data"
           class="org.jpos.iso.IFA_TTLLCHAR"/>
   </isofieldpackager>
-      
   <isofield
       id="49"
       length="3"
@@ -207,7 +202,7 @@
       length="999"
       name="Reserved National – 1 - Transaction Environment Data"
       class="org.jpos.iso.IFA_LLLCHAR"
-      emitBitmap="false"
+      tagSize="2" lenSize="3"
       tagMapper="org.jpos.iso.packager.TaggedFieldPackagerBaseTest$TagMapperImpl"
       packager="org.jpos.iso.packager.GenericTaggedFieldsPackager">
       <isofield
@@ -225,7 +220,7 @@
       id="63"
       length="999"
       name="Reserved Private 2"
-      class="org.jpos.iso.IFA_LLLCHAR"/>                  
+      class="org.jpos.iso.IFA_LLLCHAR"/>
   <isofield
       id="70"
       length="3"

@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,225 +18,207 @@
 
 package org.jpos.security;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.fail;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.NoSuchElementException;
+import org.jpos.security.CryptographicServiceMessage.ParsingException;
+import org.junit.jupiter.api.BeforeEach;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class CryptographicServiceMessageTest {
 
-    @Test
-    public void testAddField() throws Throwable {
-        CryptographicServiceMessage cryptographicServiceMessage = new CryptographicServiceMessage();
-        cryptographicServiceMessage.addField("testCryptographicServiceMessageTag", "testCryptographicServiceMessageContent");
-        assertEquals("cryptographicServiceMessage.fields.size()", 1, cryptographicServiceMessage.fields.size());
-        assertEquals("cryptographicServiceMessage.fields.get(\"TESTCRYPTOGRAPHICSERVICEMESSAGETAG\")",
-                "testCryptographicServiceMessageContent",
-                cryptographicServiceMessage.fields.get("TESTCRYPTOGRAPHICSERVICEMESSAGETAG"));
-        assertEquals("cryptographicServiceMessage.orderedTags.size()", 1, cryptographicServiceMessage.orderedTags.size());
-        assertEquals("cryptographicServiceMessage.orderedTags.get(0)", "TESTCRYPTOGRAPHICSERVICEMESSAGETAG",
-                cryptographicServiceMessage.orderedTags.get(0));
+    Exception thrown;
+
+    CryptographicServiceMessage instance;
+
+    @BeforeEach
+    void setUp() {
+        instance = new CryptographicServiceMessage();
     }
 
     @Test
-    public void testAddFieldThrowsNullPointerException() throws Throwable {
-        CryptographicServiceMessage cryptographicServiceMessage = new CryptographicServiceMessage();
-        try {
-            cryptographicServiceMessage.addField("testCryptographicServiceMessageTag", null);
-            fail("Expected NullPointerException to be thrown");
-        } catch (NullPointerException ex) {
-            assertNull("ex.getMessage()", ex.getMessage());
-            assertEquals("cryptographicServiceMessage.fields.size()", 0, cryptographicServiceMessage.fields.size());
-            assertEquals("cryptographicServiceMessage.orderedTags.size()", 0, cryptographicServiceMessage.orderedTags.size());
-        }
+    void testAddField() {
+        instance.addField("testTag", "testContent");
+        assertEquals(1, instance.fields.size());
+        assertEquals("testContent", instance.fields.get("TESTTAG"));
+        assertEquals(1, instance.orderedTags.size());
+        assertEquals("TESTTAG", instance.orderedTags.get(0));
     }
 
     @Test
-    public void testAddFieldThrowsNullPointerException1() throws Throwable {
-        CryptographicServiceMessage cryptographicServiceMessage = new CryptographicServiceMessage();
-        try {
-            cryptographicServiceMessage.addField(null, "testCryptographicServiceMessageContent");
-            fail("Expected NullPointerException to be thrown");
-        } catch (NullPointerException ex) {
-            assertNull("ex.getMessage()", ex.getMessage());
-            assertEquals("cryptographicServiceMessage.fields.size()", 0, cryptographicServiceMessage.fields.size());
-            assertEquals("cryptographicServiceMessage.orderedTags.size()", 0, cryptographicServiceMessage.orderedTags.size());
-        }
+    void testAddFieldThrowsNullPointerException() {
+        thrown = assertThrows(NullPointerException.class,
+            () -> instance.addField("testTag", null)
+        );
+        assertEquals("The content is required", thrown.getMessage());
+        assertEquals(0, instance.fields.size());
+        assertEquals(0, instance.orderedTags.size());
     }
 
     @Test
-    public void testConstructor() throws Throwable {
-        CryptographicServiceMessage cryptographicServiceMessage = new CryptographicServiceMessage();
-        assertEquals("cryptographicServiceMessage.fields.size()", 0, cryptographicServiceMessage.fields.size());
-        assertEquals("cryptographicServiceMessage.orderedTags.size()", 0, cryptographicServiceMessage.orderedTags.size());
+    void testAddFieldThrowsNullPointerException1() {
+        thrown = assertThrows(NullPointerException.class,
+            () -> instance.addField(null, "testContent")
+        );
+        assertEquals("The tag is required", thrown.getMessage());
+        assertEquals(0, instance.fields.size());
+        assertEquals(0, instance.orderedTags.size());
     }
 
     @Test
-    public void testConstructor1() throws Throwable {
-        CryptographicServiceMessage cryptographicServiceMessage = new CryptographicServiceMessage(
-                "testCryptographicServiceMessageMcl");
-        assertEquals("cryptographicServiceMessage.fields.size()", 0, cryptographicServiceMessage.fields.size());
-        assertEquals("cryptographicServiceMessage.orderedTags.size()", 0, cryptographicServiceMessage.orderedTags.size());
-        assertEquals("cryptographicServiceMessage.mcl", "testCryptographicServiceMessageMcl", cryptographicServiceMessage.mcl);
+    void testConstructor() {
+        assertEquals(0, instance.fields.size());
+        assertEquals(0, instance.orderedTags.size());
     }
 
     @Test
-    public void testDump() throws Throwable {
+    void testConstructor1() {
+        instance.setMCL("testMcl");
+        assertEquals(0, instance.fields.size());
+        assertEquals(0, instance.orderedTags.size());
+        assertEquals("testMcl", instance.mcl);
+    }
+
+    @Test
+    void testDump() throws Throwable {
         PrintStream p = new PrintStream(new ByteArrayOutputStream(), true, "UTF-8");
-        new CryptographicServiceMessage("testCryptographicServiceMessageMcl").dump(p, "testCryptographicServiceMessageIndent");
-        assertTrue("Test completed without Exception", true);
+        instance.setMCL("testMcl");
+        instance.dump(p, "testIndent");
+        assertTrue(true, "Test completed without Exception");
     }
 
     @Test
-    public void testDump1() throws Throwable {
-        CryptographicServiceMessage cryptographicServiceMessage = new CryptographicServiceMessage(
-                "testCryptographicServiceMessageMcl");
-        cryptographicServiceMessage.addField("testCryptographicServiceMessageTag", "testCryptographicServiceMessageContent");
+    void testDump1() throws Throwable {
+        instance.setMCL("testMcl");
+        instance.addField("testTag", "testContent");
         PrintStream p = new PrintStream(new ByteArrayOutputStream(), true, "UTF-8");
-        cryptographicServiceMessage.dump(p, "testCryptographicServiceMessageIndent");
-        assertTrue("Test completed without Exception", true);
+        instance.dump(p, "testIndent");
+        assertTrue(true, "Test completed without Exception");
     }
 
     @Test
-    public void testDumpThrowsNullPointerException() throws Throwable {
-        try {
-            new CryptographicServiceMessage("testCryptographicServiceMessageMcl")
-                    .dump(null, "testCryptographicServiceMessageIndent");
-            fail("Expected NullPointerException to be thrown");
-        } catch (NullPointerException ex) {
-            assertNull("ex.getMessage()", ex.getMessage());
-        }
+    void testDumpThrowsNullPointerException() {
+        instance.setMCL("testMcl");
+        thrown = assertThrows(NullPointerException.class,
+            () -> instance.dump(null, "testIndent")
+        );
+        assertNull(thrown.getMessage());
     }
 
     @Test
-    public void testGetFieldContent() throws Throwable {
-        String result = new CryptographicServiceMessage("testCryptographicServiceMessageMcl")
-                .getFieldContent("testCryptographicServiceMessageTag");
-        assertNull("result", result);
+    void testGetFieldContent() {
+        instance.setMCL("testMcl");
+        String result = instance.getFieldContent("testTag");
+        assertNull(result, "result");
     }
 
     @Test
-    public void testGetFieldContentThrowsNullPointerException() throws Throwable {
-        try {
-            new CryptographicServiceMessage("testCryptographicServiceMessageMcl").getFieldContent(null);
-            fail("Expected NullPointerException to be thrown");
-        } catch (NullPointerException ex) {
-            assertNull("ex.getMessage()", ex.getMessage());
-        }
+    void testGetFieldContentThrowsNullPointerException() {
+        instance.setMCL("testMcl");
+        thrown = assertThrows(NullPointerException.class,
+            () -> instance.getFieldContent(null)
+        );
+        assertNull(thrown.getMessage());
     }
 
     @Test
-    public void testGetMCL() throws Throwable {
-        CryptographicServiceMessage cryptographicServiceMessage = new CryptographicServiceMessage();
-        cryptographicServiceMessage.setMCL("testCryptographicServiceMessageMcl");
-        String result = cryptographicServiceMessage.getMCL();
-        assertEquals("result", "testCryptographicServiceMessageMcl", result);
+    void testGetMCL() {
+        instance.setMCL("testCryptographicServiceMessageMcl");
+        String result = instance.getMCL();
+        assertEquals("testCryptographicServiceMessageMcl", result, "result");
     }
 
     @Test
-    public void testGetMCL1() throws Throwable {
-        String result = new CryptographicServiceMessage().getMCL();
-        assertNull("result", result);
+    void testGetMCL1() {
+        String result = instance.getMCL();
+        assertNull(result, "result");
     }
 
     @Test
-    public void testParse() throws Throwable {
+    void testParse() throws Throwable {
         CryptographicServiceMessage result = CryptographicServiceMessage.parse("CSM(MCL/");
-        assertEquals("result.getMCL()", "", result.getMCL());
+        assertEquals("", result.getMCL());
     }
 
     @Test
-    public void testParseThrowsNoSuchElementException() throws Throwable {
-        try {
-            CryptographicServiceMessage.parse("");
-            fail("Expected NoSuchElementException to be thrown");
-        } catch (NoSuchElementException ex) {
-            assertNull("ex.getMessage()", ex.getMessage());
-        }
+    void testParseThrowsNoSuchElementException() {
+        thrown = assertThrows(NoSuchElementException.class,
+            () -> CryptographicServiceMessage.parse("")
+        );
+        assertNull(thrown.getMessage());
     }
 
     @Test
-    public void testParseThrowsNoSuchElementException1() throws Throwable {
-        try {
-            CryptographicServiceMessage.parse("CSM");
-            fail("Expected NoSuchElementException to be thrown");
-        } catch (NoSuchElementException ex) {
-            assertNull("ex.getMessage()", ex.getMessage());
-        }
+    void testParseThrowsNoSuchElementException1() {
+        thrown = assertThrows(NoSuchElementException.class,
+            () -> CryptographicServiceMessage.parse("CSM")
+        );
+        assertNull(thrown.getMessage());
     }
 
     @Test
-    public void testParseThrowsNullPointerException() throws Throwable {
-        try {
-            CryptographicServiceMessage.parse(null);
-            fail("Expected NullPointerException to be thrown");
-        } catch (NullPointerException ex) {
-            assertNull("ex.getMessage()", ex.getMessage());
-        }
+    void testParseThrowsNullPointerException() {
+        thrown = assertThrows(NullPointerException.class,
+            () -> CryptographicServiceMessage.parse(null)
+        );
+        assertNull(thrown.getMessage());
     }
 
     @Test
-    public void testParseThrowsParsingException() throws Throwable {
-        try {
-            CryptographicServiceMessage.parse("CSM(MCL");
-            fail("Expected ParsingException to be thrown");
-        } catch (CryptographicServiceMessage.ParsingException ex) {
-            assertEquals("ex.getMessage()", "Invalid field, doesn't have a tag: MCL", ex.getMessage());
-        }
+    void testParseThrowsParsingException() {
+        thrown = assertThrows(ParsingException.class,
+            () -> CryptographicServiceMessage.parse("CSM(MCL")
+        );
+        assertEquals("Invalid field, doesn't have a tag: MCL", thrown.getMessage());
     }
 
     @Test
-    public void testParseThrowsParsingException1() throws Throwable {
-        try {
-            CryptographicServiceMessage.parse("testCryptographicServiceMessageCsmString");
-            fail("Expected ParsingException to be thrown");
-        } catch (CryptographicServiceMessage.ParsingException ex) {
-            assertEquals("ex.getMessage()",
-                    "Invalid CSM, doesn't start with the \"CSM(\" tag: testCryptographicServiceMessageCsmString", ex.getMessage());
-        }
+    void testParseThrowsParsingException1() {
+        thrown = assertThrows(ParsingException.class,
+            () -> CryptographicServiceMessage.parse("testCsmString")
+        );
+        assertEquals("Invalid CSM, doesn't start with the \"CSM(\" tag: testCsmString"
+                , thrown.getMessage()
+        );
     }
 
     @Test
-    public void testParsingExceptionConstructor() throws Throwable {
-        CryptographicServiceMessage.ParsingException parsingException = new CryptographicServiceMessage.ParsingException(
-                "testParsingExceptionDetail");
-        assertEquals("parsingException.getMessage()", "testParsingExceptionDetail", parsingException.getMessage());
+    void testParsingExceptionConstructor() {
+        ParsingException pex = new ParsingException("testExceptionDetail");
+        assertEquals("testExceptionDetail", pex.getMessage());
     }
 
     @Test
-    public void testParsingExceptionConstructor1() throws Throwable {
-        new CryptographicServiceMessage.ParsingException();
-        assertTrue("Test completed without Exception", true);
+    void testParsingExceptionConstructor1() {
+        new ParsingException();
+        assertTrue(true, "Test completed without Exception");
     }
 
     @Test
-    public void testSetMCL() throws Throwable {
-        CryptographicServiceMessage cryptographicServiceMessage = new CryptographicServiceMessage();
-        cryptographicServiceMessage.setMCL("testCryptographicServiceMessageMcl");
-        assertEquals("cryptographicServiceMessage.mcl", "testCryptographicServiceMessageMcl", cryptographicServiceMessage.mcl);
+    void testSetMCL() {
+        instance.setMCL("testMcl");
+        assertEquals("testMcl", instance.mcl);
     }
 
     @Test
-    public void testToString() throws Throwable {
-        String result = new CryptographicServiceMessage("testCryptographicServiceMessageMcl").toString();
-        assertEquals("result", "CSM(MCL/testCryptographicServiceMessageMcl )", result);
+    void testToString() {
+        instance.setMCL("testMcl");
+        String result = instance.toString();
+        assertEquals("CSM(MCL/testMcl )", result);
     }
 
     @Test
-    public void testToString1() throws Throwable {
-        CryptographicServiceMessage cryptographicServiceMessage = new CryptographicServiceMessage(
-                "testCryptographicServiceMessageMcl");
-        cryptographicServiceMessage.addField("testCryptographicServiceMessageTag", "testCryptographicServiceMessageContent");
-        String result = cryptographicServiceMessage.toString();
-        assertEquals(
-                "result",
-                "CSM(MCL/testCryptographicServiceMessageMcl TESTCRYPTOGRAPHICSERVICEMESSAGETAG/testCryptographicServiceMessageContent )",
-                result);
+    void testToString1() {
+        instance = new CryptographicServiceMessage("testMcl");
+        instance.addField("testTag", "testContent");
+        String result = instance.toString();
+        assertEquals("CSM(MCL/testMcl TESTTAG/testContent )", result);
     }
+
 }

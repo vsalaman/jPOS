@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -24,7 +24,6 @@ import org.jpos.util.Loggeable;
 
 @SuppressWarnings("unused")
 public class PosDataCode implements Loggeable {
-
 
     public interface Flag {
         int getOffset();
@@ -184,7 +183,6 @@ public class PosDataCode implements Loggeable {
     {
         super();
 
-
         b[0]  = (byte) readingMethod;
         b[1]  = (byte) (readingMethod >>> 8);
         b[2]  = (byte) (readingMethod >>> 16);
@@ -207,7 +205,11 @@ public class PosDataCode implements Loggeable {
     }
 
     private PosDataCode (byte[] b) {
-        this.b = b;
+        if (b != null) {
+            // will always use our own internal copy of array
+            int copyLen= Math.min(b.length, 16);
+            System.arraycopy(b, 0, this.b, 0, copyLen);
+        }
     }
 
     public boolean hasReadingMethods (int readingMethods) {
@@ -241,12 +243,29 @@ public class PosDataCode implements Loggeable {
     public byte[] getBytes() {
         return b;
     }
+    public boolean isEMV() {
+        return hasReadingMethod(ReadingMethod.ICC) || hasReadingMethod(ReadingMethod.CONTACTLESS);
+    }
+    public boolean isManualEntry() {
+        return hasReadingMethod(ReadingMethod.PHYSICAL);
+    }
+    public boolean isSwiped() {
+        return hasReadingMethod(ReadingMethod.MAGNETIC_STRIPE);
+    }
+    public boolean isRecurring() {
+        return hasPosEnvironment(POSEnvironment.RECURRING);
+    }
+    public boolean isECommerce() {
+        return hasPosEnvironment(POSEnvironment.E_COMMERCE);
+    }
     public String toString() {
         return super.toString() + "[" + ISOUtil.hexString (getBytes())+ "]";
     }
+
     public static PosDataCode valueOf (byte[] b) {
         return new PosDataCode(b);  // we create new objects for now, but may return cached instances in the future
     }
+
     public void dump(PrintStream p, String indent) {
         String inner = indent + "  ";
         StringBuilder sb = new StringBuilder();

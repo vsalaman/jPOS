@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -247,9 +247,12 @@ public class Context implements Externalizable, Loggeable, Pausable, Cloneable {
 
     protected void dumpMap (PrintStream p, String indent) {
         if (map != null) {
-             synchronized(map) {
-                map.entrySet().forEach(e -> dumpEntry(p, indent, e));
-             }
+            Map<Object,Object> cloned;
+            cloned = Collections.synchronizedMap (new LinkedHashMap<>());
+            synchronized(map) {
+                cloned.putAll(map);
+            }
+            cloned.entrySet().forEach(e -> dumpEntry(p, indent, e));
         }
     }
 
@@ -279,7 +282,17 @@ public class Context implements Externalizable, Loggeable, Pausable, Cloneable {
             p.println("");
             p.println(ISOUtil.hexdump(b));
             p.print(indent);
-        } else if (value instanceof LogEvent) {
+        }
+        else if (value instanceof short[]) {
+            p.print (Arrays.toString((short[]) value));
+        } else if (value instanceof int[]) {
+            p.print(Arrays.toString((int[]) value));
+        } else if (value instanceof long[]) {
+            p.print(Arrays.toString((long[]) value));
+        } else if (value instanceof Object[]) {
+            p.print (ISOUtil.normalize(Arrays.toString((Object[]) value), true));
+        }
+        else if (value instanceof LogEvent) {
             ((LogEvent) value).dump(p, indent);
             p.print(indent);
         } else if (value != null) {
@@ -333,7 +346,8 @@ public class Context implements Externalizable, Loggeable, Pausable, Cloneable {
      * @param msg trace information
      */
     public void log (Object msg) {
-        getLogEvent().addMessage (msg);
+        if (msg != getMap()) // prevent recursive call to dump (and StackOverflow)
+            getLogEvent().addMessage (msg);
     }
     /**
      * add a checkpoint to the profiler

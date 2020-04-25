@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -39,6 +39,9 @@ public class ISODate {
     public static final long ONE_YEAR = 365L*86400L*1000L;
    /**
     * Formats a date object, using the default time zone for this host
+    *
+    * WARNING: See <a href="https://jpos.org/faq/isodate_pattern.html">important issue</a> related to date pattern.
+    *
     * @param d date object to be formatted
     * @param pattern to be used for formatting
     */
@@ -48,6 +51,11 @@ public class ISODate {
     /**
      * You should use this version of formatDate() if you want a specific 
      * timeZone to calculate the date on.
+     *
+     * WARNING: See <a href="https://jpos.org/faq/isodate_pattern.html">important issue</a> related to date pattern.
+     *
+     * @param d date object to be formatted
+     * @param pattern to be used for formatting
      * @param timeZone for GMT for example, use TimeZone.getTimeZone("GMT")
      *        and for Uruguay use TimeZone.getTimeZone("GMT-03:00")
      */
@@ -107,8 +115,7 @@ public class ISODate {
     public static Date parseDateTime(String s, TimeZone timeZone) {
         Date d = null;
         SimpleDateFormat df =
-            (SimpleDateFormat) DateFormat.getDateTimeInstance(
-                DateFormat.SHORT, DateFormat.MEDIUM, Locale.UK);
+            new SimpleDateFormat("dd/MM/yy hh:mm:ss", Locale.UK);
 
         df.setTimeZone (timeZone);
         try {

@@ -4,28 +4,27 @@ ext {
         jdbm: 'jdbm:jdbm:1.0',
         sleepycat_je: 'com.sleepycat:je:18.3.12',
         commons_cli: 'commons-cli:commons-cli:1.4',
-        jline: 'org.jline:jline:3.9.0',
+        commons_lang3: 'org.apache.commons:commons-lang3:3.9',
+        jline: 'org.jline:jline:3.14.0',
         beanshell: 'org.apache-extras.beanshell:bsh:2.0b6',
         javatuples: 'org.javatuples:javatuples:1.2',
-        javassist: 'org.javassist:javassist:3.23.1-GA',
+        javassist: 'org.javassist:javassist:3.26.0-GA',
         osgi_core: 'org.osgi:org.osgi.core:6.0.0',
-        mockito: 'org.mockito:mockito-all:1.10.19',
+        mockito: 'org.mockito:mockito-core:3.3.3',
+        mockito_jupiter: 'org.mockito:mockito-junit-jupiter:3.3.3',
         fest_assert: 'org.easytesting:fest-assert:1.4',
         xmlunit: 'xmlunit:xmlunit:1.6',
-        junit: 'junit:junit:4.12',
+        junit: 'org.junit.jupiter:junit-jupiter:5.6.0',
         bouncycastle: [
-            'org.bouncycastle:bcprov-jdk15on:1.61',
-            'org.bouncycastle:bcpg-jdk15on:1.61'
+            'org.bouncycastle:bcprov-jdk15on:1.64',
+            'org.bouncycastle:bcpg-jdk15on:1.64'
         ],
-        hamcrest: [
-            'org.hamcrest:hamcrest-core:1.3',
-            'org.hamcrest:hamcrest-library:1.3'
-        ],
-        sshd: 'org.apache.sshd:sshd-core:1.7.0',
-        slf4j_api: "org.slf4j:slf4j-api:1.7.26",
-        slf4j_nop: "org.slf4j:slf4j-nop:1.7.26",
-        hdrhistogram: 'org.hdrhistogram:HdrHistogram:2.1.11',
-        yaml: "org.yaml:snakeyaml:1.24"
+        hamcrest: 'org.hamcrest:hamcrest:2.2',
+        sshd: 'org.apache.sshd:sshd-core:2.4.0',
+        slf4j_api: "org.slf4j:slf4j-api:1.7.30",
+        slf4j_nop: "org.slf4j:slf4j-nop:1.7.30",
+        hdrhistogram: 'org.hdrhistogram:HdrHistogram:2.1.12',
+        yaml: "org.yaml:snakeyaml:1.26"
     ]
 }
 

@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,7 +18,8 @@
 
 package org.jpos.iso.packagers;
 
-import junit.framework.TestCase;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import org.jpos.iso.ISODate;
 import org.jpos.iso.ISOMsg;
 import org.jpos.iso.ISOPackager;
@@ -26,6 +27,8 @@ import org.jpos.iso.TestUtils;
 import org.jpos.iso.packager.*;
 import org.jpos.util.Profiler;
 import org.jpos.util.TPS;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -34,7 +37,7 @@ import java.io.FileOutputStream;
 import java.util.Arrays;
 import java.util.Date;
 
-public class PackagerTestCase extends TestCase {
+public class PackagerTestCase {
     private XMLPackager xmlPackager;
     public static final String PREFIX = "build/resources/test/org/jpos/iso/packagers/";
 
@@ -73,61 +76,74 @@ public class PackagerTestCase extends TestCase {
         }
     }
 
+    @BeforeEach
     public void setUp () throws Exception {
         xmlPackager = new XMLPackager();
     }
-    public PackagerTestCase (String name) {
-        super (name);
-    }
+    @Test
     public void testPostPackager () throws Exception {
         doTest (new PostPackager(), "post", "post");
     }
+    @Test
     public void testISO87APackager() throws Exception {
         doTest (new ISO87APackager(), "ISO87", "ISO87APackager");
     }
+    @Test
     public void testISO87BPackager() throws Exception {
         doTest (new ISO87BPackager(), "ISO87", "ISO87BPackager");
     }
+    @Test
     public void testGeneric87ascii() throws Exception {
         doTest (new GenericPackager ("src/main/resources/packager/iso87ascii.xml"),
             "ISO87", "ISO87APackager");
     }
+    @Test
     public void testGeneric87asciiAsResource() throws Exception {
         doTest (new GenericPackager ("jar:packager/iso87ascii.xml"),
                 "ISO87", "ISO87APackager");
     }
 
+    @Test
     public void testGeneric87binary() throws Exception {
         doTest (new GenericPackager ("src/main/resources/packager/iso87binary.xml"),
             "ISO87", "ISO87BPackager");
     }
+    @Test
     public void testISO93APackager() throws Exception {
         doTest (new ISO93APackager(), "ISO93", "ISO93APackager");
     }
+    @Test
     public void testISO93BPackager() throws Exception {
         doTest (new ISO93BPackager(), "ISO93", "ISO93BPackager");
     }
+    @Test
     public void testGeneric93ascii() throws Exception {
         doTest (new GenericPackager ("src/main/resources/packager/iso93ascii.xml"),
             "ISO93", "ISO93APackager");
     }
+    @Test
     public void testGeneric93binary() throws Exception {
         doTest (new GenericPackager ("src/main/resources/packager/iso93binary.xml"), "ISO93", "ISO93BPackager");
     }        
+    @Test
     public void testF64Binary() throws Exception {
         doTest (new GenericPackager ("src/main/resources/packager/iso87binary.xml"), "ISO87-Field64", "ISO87B-Field64");
     }
+    @Test
     public void testF64ascii() throws Exception {
         doTest (new GenericPackager ("src/main/resources/packager/iso87ascii.xml"),
             "ISO87-Field64", "ISO87A-Field64");
     }
+    @Test
     public void testXMLPackager () throws Exception {
-        doTest (xmlPackager, "XMLPackager", "XMLPackager");
+        doTest (xmlPackager, "XMLPackager", "XMLPackager", true);
     }
 
+    @Test
     public void testGeneric93ebcdic() throws Exception {
         doTest (new GenericPackager ("src/dist/cfg/packager/iso93ebcdic-custom.xml"), "ISO93ebcdic-Custom-XmlMsg", "ISO93ebcdic-Custom-Img");        
     }
+    @Test
     public void testPerformance() throws Exception {
         final int COUNT = 100000;
         ISOPackager p = new GenericPackager ("src/main/resources/packager/iso87binary.xml");
@@ -196,6 +212,11 @@ public class PackagerTestCase extends TestCase {
     private void doTest (ISOPackager packager, String msg, String img)
         throws Exception
     {
+        doTest(packager, msg, img, false);
+    }
+    private void doTest (ISOPackager packager, String msg, String img, boolean removeCRLF)
+        throws Exception
+    {
         // Logger logger = new Logger();
         // logger.addListener (new SimpleLogListener (System.out));
         // packager.setLogger (logger, msg + "-m");
@@ -211,19 +232,53 @@ public class PackagerTestCase extends TestCase {
         writeImage (img, p);
 
         byte[] b = getImage (img);
-        TestUtils.assertEquals(b, p);
+        if (removeCRLF) {
+            TestUtils.assertEquals(removeAllCRLF(b), removeAllCRLF(p));
+        } else {
+            TestUtils.assertEquals(b, p);
+        }
 
         ISOMsg m1 = new ISOMsg ();
         // packager.setLogger (logger, msg + "-m1");
         m1.setPackager (packager);
         m1.unpack (b);
-        TestUtils.assertEquals(b, m1.pack());
+        if (removeCRLF) {
+            TestUtils.assertEquals(removeAllCRLF(b), removeAllCRLF(m1.pack()));
+        } else {
+            TestUtils.assertEquals(b, m1.pack());
+        }
 
         ISOMsg m2 = new ISOMsg ();
         m2.setPackager (packager);
         // packager.setLogger (logger, msg + "-m2");
         m2.unpack (new ByteArrayInputStream (out.toByteArray()));
-        TestUtils.assertEquals(b, m2.pack());
+        if (removeCRLF) {
+            TestUtils.assertEquals(removeAllCRLF(b), removeAllCRLF(m2.pack()));
+        } else {
+            TestUtils.assertEquals(b, m2.pack());
+        }
+    }
+
+    /**
+     * Used specifically when testing XmlPackager.  When messages are generated
+     * on Windows they include a carriage return (CR) and is then compared against
+     * a version that was generated on Unix.
+     *
+     * This function is used to remove CR and LF before comparison.
+     *
+     * @param in Byte array to modify.
+     * @return Modified byte array.
+     */
+    private byte[] removeAllCRLF(byte[] in) {
+        ByteArrayInputStream byteArrayInputStream = new ByteArrayInputStream(in);
+        ByteArrayOutputStream byteArrayOutputStream = new ByteArrayOutputStream();
+        while (byteArrayInputStream.available() > 0) {
+            int b = byteArrayInputStream.read();
+            if (b != 10 && b != 13) {
+                byteArrayOutputStream.write(b);
+            }
+        }
+        return byteArrayOutputStream.toByteArray();
     }
 
     /*

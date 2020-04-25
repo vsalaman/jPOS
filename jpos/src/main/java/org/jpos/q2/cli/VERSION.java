@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -18,10 +18,12 @@
 
 package org.jpos.q2.cli;
 
+import org.jpos.iso.ISOUtil;
 import org.jpos.q2.CLICommand;
 import org.jpos.q2.CLIContext;
 import org.jpos.q2.Q2;
 import org.jpos.q2.install.ModuleUtils;
+import org.jpos.util.PGPHelper;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
@@ -39,6 +41,7 @@ public class VERSION implements CLICommand {
         if (all) {
             cli.println(ModuleUtils.getModulesUUIDs().stream().collect(Collectors.joining(System.lineSeparator())));
             cli.println(ModuleUtils.getSystemHash());
+            cli.println(PGPHelper.getLicenseeHash());
         }
     }
 }

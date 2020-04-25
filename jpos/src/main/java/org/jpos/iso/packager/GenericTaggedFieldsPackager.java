@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -19,17 +19,18 @@
 package org.jpos.iso.packager;
 
 import org.jpos.iso.*;
+import org.jpos.tlv.CharTag;
+import org.jpos.tlv.CharTagMap;
+import org.jpos.tlv.CharTagMapBuilder;
 import org.jpos.util.LogEvent;
 import org.jpos.util.Logger;
 import org.xml.sax.Attributes;
 
-import java.io.EOFException;
-import java.io.IOException;
+import java.io.ByteArrayOutputStream;
 import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -44,6 +45,10 @@ public class GenericTaggedFieldsPackager extends GenericPackager
 
     private TagMapper tagMapper = null;
     private Integer fieldId = 0;
+    private CharTagMapBuilder tagMapBuilder;
+    private int     tagSize;
+    private int     lenSize;
+    private boolean swapTagAndLen;
 
     public GenericTaggedFieldsPackager() throws ISOException {
         super();
@@ -54,10 +59,15 @@ public class GenericTaggedFieldsPackager extends GenericPackager
       return fieldId;
     }
 
+    protected CharTagMap unpackTLV(byte[] b) {
+        CharTagMap tm = tagMapBuilder.build();
+        tm.unpack(new String(b, ISOUtil.CHARSET));
+        return tm;
+    }
+
     @Override
     public int unpack(ISOComponent m, byte[] b) throws ISOException {
         LogEvent evt = new LogEvent(this, "unpack");
-        ISOFieldPackager[] fields = Arrays.copyOf(fld, fld.length);
         try {
             if (m.getComposite() != m)
                 throw new ISOException("Can't call packager on non Composite");
@@ -67,19 +77,22 @@ public class GenericTaggedFieldsPackager extends GenericPackager
                 evt.addMessage(ISOUtil.hexString(b));
 
             int consumed = 0;
-            int maxField = fld.length;
-            while (consumed < b.length) {
-                for (int i = getFirstField(); i < maxField && consumed < b.length; i++) {
-                    if (fields[i] != null) {
-                        ISOComponent c = fields[i].createComponent(i);
-                        int unpacked = fields[i].unpack(c, b, consumed);
-                        consumed = consumed + unpacked;
-                        if (unpacked > 0) {
-                            if (!(fields[i] instanceof TaggedFieldPackagerBase))
-                                fields[i] = null;
-                            m.set(c);
-                        }
-                    }
+            CharTagMap tm = unpackTLV(b);
+            for (CharTag tag : tm.values()) {
+                Integer i =  tagMapper.getFieldNumberForTag(fieldId, tag.getTagId());
+                if (i == null)
+                    // skip unmapped
+                    continue;
+
+                if (fld[i] == null) {
+                    consumed += tagSize + lenSize + tag.getValue().length();
+                    m.set(new ISOField(i, tag.getValue()));
+                } else {
+                    ISOComponent c = fld[i].createComponent(i);
+                    byte[] bb = tag.getTLV().getBytes(ISOUtil.CHARSET);
+                    int unpacked = fld[i].unpack(c, bb, 0);
+                    consumed += unpacked;
+                    m.set(c);
                 }
             }
             if (b.length != consumed) {
@@ -99,59 +112,9 @@ public class GenericTaggedFieldsPackager extends GenericPackager
     }
 
     @Override
-    public void unpack(ISOComponent m, InputStream in) throws IOException, ISOException {
-        LogEvent evt = new LogEvent(this, "unpack");
-        try {
-            if (m.getComposite() != m)
-                throw new ISOException("Can't call packager on non Composite");
-
-            // if ISOMsg and headerLength defined
-            if (m instanceof ISOMsg && ((ISOMsg) m).getHeader() == null && headerLength > 0) {
-                byte[] h = new byte[headerLength];
-                in.read(h, 0, headerLength);
-                ((ISOMsg) m).setHeader(h);
-            }
-
-            if (!(fld[0] instanceof ISOMsgFieldPackager) &&
-                    !(fld[0] instanceof ISOBitMapPackager)) {
-                ISOComponent mti = fld[0].createComponent(0);
-                fld[0].unpack(mti, in);
-                m.set(mti);
-            }
-
-            int maxField = fld.length;
-            for (int i = getFirstField(); i < maxField; i++) {
-                if (fld[i] == null)
-                    continue;
-
-                ISOComponent c = fld[i].createComponent(i);
-                fld[i].unpack(c, in);
-                if (logger != null) {
-                    evt.addMessage("<unpack fld=\"" + i
-                            + "\" packager=\""
-                            + fld[i].getClass().getName() + "\">");
-                    if (c.getValue() instanceof ISOMsg)
-                        evt.addMessage(c.getValue());
-                    else
-                        evt.addMessage("  <value>"
-                                + c.getValue().toString()
-                                + "</value>");
-                    evt.addMessage("</unpack>");
-                }
-                m.set(c);
-
-            }
-        } catch (ISOException e) {
-            evt.addMessage(e);
-            throw e;
-        } catch (EOFException e) {
-            throw e;
-        } catch (Exception e) {
-            evt.addMessage(e);
-            throw new ISOException(e);
-        } finally {
-            Logger.log(evt);
-        }
+    public void unpack(ISOComponent m, InputStream in) {
+        // This method is not called anywhere so is usless
+        throw new UnsupportedOperationException("The on InputStream is not supported");
     }
 
     /**
@@ -163,42 +126,60 @@ public class GenericTaggedFieldsPackager extends GenericPackager
     @Override
     public byte[] pack(ISOComponent m) throws ISOException {
         LogEvent evt = new LogEvent(this, "pack");
-        try {
+        try (ByteArrayOutputStream bout = new ByteArrayOutputStream(100)) {
             ISOComponent c;
-            List<byte[]> l = new ArrayList<byte[]>();
-            Map fields = m.getChildren();
-            int len = 0;
+            byte[] b;
 
-            for (int i = getFirstField(); i <= m.getMaxField(); i++) {
-                c = (ISOComponent) fields.get(i);
-                if (c != null) {
-                    try {
-                        byte[] b = fld[i].pack(c);
-                        len += b.length;
-                        l.add(b);
-                    } catch (Exception e) {
-                        evt.addMessage("error packing subfield " + i);
-                        evt.addMessage(c);
-                        evt.addMessage(e);
-                        throw e;
-                    }
+            @SuppressWarnings("unchecked")
+            Map<Integer, ISOComponent> fields = (Map<Integer, ISOComponent>) m.getChildren();
+            List<Integer> keys = fields.keySet().stream()
+                    .filter(i -> i >= 0) // skip bitmap
+                    .sorted()
+                    .collect(Collectors.toList());
+
+            for (int i : keys) {
+                c = fields.get(i);
+                if (fld[i] == null) {
+                    // process undefined in packager
+                    if (!(c instanceof ISOField))
+                        // skip other than character fields
+                        continue;
+
+                    String tag = tagMapper.getTagForField(fieldId, i);
+                    if (tag == null)
+                        // skip when undefined and unmapped
+                        continue;
+
+                    CharTagMap tm = tagMapBuilder.build();
+                    @SuppressWarnings("unchecked")
+                    String value = (String) c.getValue();
+                    tm.addTag(tag, value);
+                    b = tm.pack().getBytes(ISOUtil.CHARSET);
+                    bout.write(b);
+                    continue;
+                }
+
+                try {
+                    b = fld[i].pack(c);
+                    bout.write(b);
+                } catch (ISOException | RuntimeException ex) {
+                    evt.addMessage("error packing subfield " + i);
+                    evt.addMessage(c);
+                    evt.addMessage(ex);
+                    throw ex;
                 }
             }
-            int k = 0;
-            byte[] d = new byte[len];
-            for (byte[] b : l) {
-                System.arraycopy(b, 0, d, k, b.length);
-                k += b.length;
-            }
+
+            byte[] d = bout.toByteArray();
             if (logger != null)  // save a few CPU cycle if no logger available
                 evt.addMessage(ISOUtil.hexString(d));
             return d;
-        } catch (ISOException e) {
-            evt.addMessage(e);
-            throw e;
-        } catch (Exception e) {
-            evt.addMessage(e);
-            throw new ISOException(e);
+        } catch (ISOException ex) {
+            evt.addMessage(ex);
+            throw ex;
+        } catch (Exception ex) {
+            evt.addMessage(ex);
+            throw new ISOException(ex);
         } finally {
             Logger.log(evt);
         }
@@ -232,6 +213,24 @@ public class GenericTaggedFieldsPackager extends GenericPackager
             Class<? extends TagMapper> clazz = Class.forName(atts.getValue("tagMapper")).asSubclass(TagMapper.class);
             tagMapper = clazz.newInstance();
             fieldId = Integer.parseInt(atts.getValue("id"));
+
+            if (atts.getValue("tagSize") == null)
+                throw new IllegalArgumentException("The 'tagSize' attribute is required");
+            tagSize = Integer.parseInt(atts.getValue("tagSize"));
+
+            if (atts.getValue("lenSize") == null)
+                throw new IllegalArgumentException("The 'lenSize' attribute is required");
+            lenSize = Integer.parseInt(atts.getValue("lenSize"));
+
+            swapTagAndLen = false;
+            if (atts.getValue("swapTagAndLen") != null)
+                swapTagAndLen = Boolean.valueOf(atts.getValue("swapTagAndLen"));
+
+            tagMapBuilder = new CharTagMapBuilder()
+                .withTagSize(tagSize)
+                .withLengthSize(lenSize)
+                .withTagLengthSwap(swapTagAndLen);
+
         } catch (InstantiationException e) {
             throw new RuntimeException(e);
         } catch (IllegalAccessException e) {

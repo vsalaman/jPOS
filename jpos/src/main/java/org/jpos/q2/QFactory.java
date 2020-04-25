@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -115,10 +115,10 @@ public class QFactory {
             if (obj instanceof QBean) 
                 mserver.invoke (objectName, "init",  null, null);
         }
-        catch (ConfigurationException ce) {
+        catch (Throwable t) {
             mserver.unregisterMBean(objectName);
-            ce.fillInStackTrace();
-            throw ce;
+            t.fillInStackTrace();
+            throw t;
         }
 
         return instance;
@@ -439,5 +439,16 @@ public class QFactory {
                     e.getTargetException()
             );
         }
+    }
+
+    public static boolean isEnabled (Element e) {
+        String enabledAttribute = getEnabledAttribute(e);
+        return "true".equalsIgnoreCase(enabledAttribute) ||
+          "yes".equalsIgnoreCase(enabledAttribute) ||
+          enabledAttribute.contains(Environment.getEnvironment().getName());
+    }
+
+    public static String getEnabledAttribute (Element e) {
+       return Environment.get(e.getAttributeValue("enabled", "true"));
     }
 }

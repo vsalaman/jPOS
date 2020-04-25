@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -52,7 +52,7 @@ public class SshService extends QBeanSupport implements SshCLIContextMBean
 
         sshd = SshServer.setUpDefaultServer();
         sshd.setPort(port);
-        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(new File(hostKeys)));
+        sshd.setKeyPairProvider(new SimpleGeneratorHostKeyProvider(new File(hostKeys).toPath()));
 
         CliShellFactory csf = new CliShellFactory(getServer(), prefixes);
         sshd.setShellFactory(csf);

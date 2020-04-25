@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -163,7 +163,6 @@ public class ThreadPool extends ThreadGroup implements LogSource, Loggeable, Con
         p.println (inner  + "<jobs>" + getJobCount() + "</jobs>");
         p.println (inner  + "<size>" + getPoolSize() + "</size>");
         p.println (inner  + "<max>"  + getMaxPoolSize() + "</max>");
-        p.println (inner  + "<active>" + getActiveCount() + "</active>");
         p.println (inner  + "<idle>"  + getIdleCount() + "</idle>");
         p.println (inner  + "<active>"  + getActiveCount() + "</active>");
         p.println (inner  + "<pending>" + getPendingCount() + "</pending>");

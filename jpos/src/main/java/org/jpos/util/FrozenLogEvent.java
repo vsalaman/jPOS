@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -23,6 +23,10 @@ import java.io.Serializable;
 
 public class FrozenLogEvent extends LogEvent implements Serializable {
     private String frozen;
+
+    public FrozenLogEvent(String frozen) {
+        this.frozen = frozen;
+    }
     public FrozenLogEvent (LogEvent evt) {
         super(evt.getSource(), evt.getTag(), evt.getRealm());
         frozen = evt.toString();

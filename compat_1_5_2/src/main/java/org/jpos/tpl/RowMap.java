@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -22,7 +22,7 @@ import org.jpos.iso.ISODate;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.Hashtable;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -35,7 +35,7 @@ import java.util.Map;
 public class RowMap {
     protected Map map;
     public RowMap () {
-        map = new Hashtable();
+        map = new HashMap();
     }
     public void set (String name, String value) {
         map.put (name, value != null ? "'"+escape(value)+"'" : "null");

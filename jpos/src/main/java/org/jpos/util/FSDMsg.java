@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -552,6 +552,9 @@ public class FSDMsg implements Loggeable, Cloneable {
     }
     public void copy (String fieldName, FSDMsg msg) {
         fields.put (fieldName, msg.get (fieldName));
+    }
+    public void copy (String fieldName, FSDMsg msg, String def) {
+        fields.put (fieldName, msg.get(fieldName, def));
     }
     public byte[] getHexBytes (String name) {
         String s = get (name);

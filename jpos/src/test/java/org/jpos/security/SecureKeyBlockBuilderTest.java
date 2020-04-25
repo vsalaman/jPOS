@@ -1,6 +1,6 @@
 /*
  * jPOS Project [http://jpos.org]
- * Copyright (C) 2000-2019 jPOS Software SRL
+ * Copyright (C) 2000-2020 jPOS Software SRL
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as
@@ -21,10 +21,10 @@ package org.jpos.security;
 import java.util.Map;
 import java.util.Map.Entry;
 import org.jpos.iso.ISOUtil;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
-import static org.junit.Assert.*;
+import static org.junit.jupiter.api.Assertions.*;
 
 /**
  *
@@ -45,7 +45,7 @@ public class SecureKeyBlockBuilderTest {
 
     SecureKeyBlock ret;
 
-    @Before
+    @BeforeEach
     public void setUp() {
         instance = SecureKeyBlockBuilder.newBuilder();
     }
@@ -53,18 +53,22 @@ public class SecureKeyBlockBuilderTest {
     /**
      * Test of build method, of class SecureKeyBlock.
      */
-    @Test(expected = NullPointerException.class)
+    @Test
     public void testBuildNull() {
-        instance.build(null);
+        assertThrows(NullPointerException.class, () -> {
+            instance.build(null);
+        });
     }
 
     /**
      * Test of build method, of class SecureKeyBlock.
      */
-    @Test(expected = IllegalArgumentException.class)
+    @Test
     public void testBuildToShort() {
-        String data = "10024V2TG17N00";
-        instance.build(data);
+        assertThrows(IllegalArgumentException.class, () -> {
+            String data = "10024V2TG17N00";
+            instance.build(data);
+        });
     }
 
     /**
