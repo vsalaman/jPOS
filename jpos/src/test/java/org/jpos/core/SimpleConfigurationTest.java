@@ -18,6 +18,8 @@
 
 package org.jpos.core;
 
+import static org.apache.commons.lang3.JavaVersion.JAVA_14;
+import static org.apache.commons.lang3.SystemUtils.isJavaVersionAtMost;
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.FileNotFoundException;
@@ -112,7 +114,11 @@ public class SimpleConfigurationTest {
             new SimpleConfiguration((Properties) null).getAll("testSimpleConfigurationName");
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.util.Properties.get(Object)\" because \"this.props\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -190,7 +196,11 @@ public class SimpleConfigurationTest {
             new SimpleConfiguration((Properties) null).getBoolean("testSimpleConfigurationName", true);
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.util.Properties.get(Object)\" because \"this.props\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -200,7 +210,11 @@ public class SimpleConfigurationTest {
             new SimpleConfiguration((Properties) null).getBoolean("testSimpleConfigurationName");
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.util.Properties.get(Object)\" because \"this.props\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -228,7 +242,11 @@ public class SimpleConfigurationTest {
             new SimpleConfiguration((Properties) null).getDouble("testSimpleConfigurationName");
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.util.Properties.get(Object)\" because \"this.props\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -238,7 +256,11 @@ public class SimpleConfigurationTest {
             new SimpleConfiguration((Properties) null).getDouble("testSimpleConfigurationName", 100.0);
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.util.Properties.get(Object)\" because \"this.props\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -290,7 +312,11 @@ public class SimpleConfigurationTest {
             new SimpleConfiguration((Properties) null).getInt("testSimpleConfigurationName", 100);
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.util.Properties.get(Object)\" because \"this.props\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -300,7 +326,11 @@ public class SimpleConfigurationTest {
             new SimpleConfiguration((Properties) null).getInt("testSimpleConfigurationName");
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.util.Properties.get(Object)\" because \"this.props\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -362,7 +392,11 @@ public class SimpleConfigurationTest {
             new SimpleConfiguration(new Properties()).getLong(null, 100L);
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"Object.hashCode()\" because \"key\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -372,7 +406,11 @@ public class SimpleConfigurationTest {
             new SimpleConfiguration((Properties) null).getLong("testSimpleConfigurationName");
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.util.Properties.get(Object)\" because \"this.props\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -394,7 +432,11 @@ public class SimpleConfigurationTest {
             new SimpleConfiguration((Properties) null).get("testSimpleConfigurationName", "testSimpleConfigurationDef");
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.util.Properties.get(Object)\" because \"this.props\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -404,7 +446,11 @@ public class SimpleConfigurationTest {
             new SimpleConfiguration((Properties) null).get("testSimpleConfigurationName");
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.util.Properties.get(Object)\" because \"this.props\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -438,7 +484,11 @@ public class SimpleConfigurationTest {
             simpleConfiguration.put("testSimpleConfigurationName", "testString");
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.util.Properties.put(Object, Object)\" because \"this.props\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -481,15 +531,15 @@ public class SimpleConfigurationTest {
     @Test
     public void testReadVerbatimProperty () {
         SimpleConfiguration cfg = new SimpleConfiguration();
-        cfg.put ("verbatim", "$verb{${verbatin.property}}");
-        assertEquals("${verbatin.property}", cfg.get("verbatim"));
+        cfg.put ("verbatim", "$verb{${verbatim.property}}");
+        assertEquals("${verbatim.property}", cfg.get("verbatim"));
     }
 
     @Test
     public void testReadEnvironmentVariable () {
         String envVarName = "HOME";
         if (System.getProperty("os.name").startsWith("Windows")) envVarName = "OS";
-        
+
         SimpleConfiguration cfg = new SimpleConfiguration();
         cfg.put("home", "$env{"+envVarName+"}");
         assertEquals(System.getenv(envVarName), cfg.get("home"));
@@ -515,4 +565,43 @@ public class SimpleConfigurationTest {
         cfg.put ("host", "${jpos.host}:${jpos.port}");
         assertEquals("http://jpos.org:80", cfg.get("host"));
     }
+
+
+    @Test
+    public void testDefaultPropertySimple() {
+        SimpleConfiguration cfg = new SimpleConfiguration();
+        cfg.put("myprop", "AAA ${jpos.xxx:default_value} BBB");
+        assertEquals("AAA default_value BBB", cfg.get("myprop"));
+    }
+
+
+    @Test
+    public void testDefaultPropertyComplex() {
+        SimpleConfiguration cfg = new SimpleConfiguration();
+        // first colon is the default separator
+        // second colon should be part of the default value
+        // extra $, { and } added, trying to make it fail
+        cfg.put("myprop", "A$A ${jpos.xxx:default:value${} B${B");
+        assertEquals("A$A default:value${ B${B", cfg.get("myprop"));
+    }
+
+    @Test
+    public void testDefaultMultipleProperties() {
+        System.setProperty("jpos.hello", "Hello jPOS!");
+        SimpleConfiguration cfg = new SimpleConfiguration();
+
+        // first colon is the default separator
+        // second colon should be part of the default value
+        // try with several replacements in the string
+        String value= "AAA $sys{intro:Introduction:} BBB ${jpos.hello} CCC ${jpos.xxx:(I said: Hello jPOS!)} DDD";
+        cfg.put("myprop", value);
+
+        // first, the `intro` sys property is not defined, so we get the default value
+        assertEquals("AAA Introduction: BBB Hello jPOS! CCC (I said: Hello jPOS!) DDD", cfg.get("myprop"));
+
+        // now, we define `intro`, so we get its value from the sys propertis
+        System.setProperty("intro", "Say it:");
+        assertEquals("AAA Say it: BBB Hello jPOS! CCC (I said: Hello jPOS!) DDD", cfg.get("myprop"));
+    }
+
 }

@@ -24,6 +24,13 @@ import org.jpos.space.SpaceFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
+import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 @SuppressWarnings("unchecked")
 public class TransactionManagerTestCase {
@@ -33,9 +40,10 @@ public class TransactionManagerTestCase {
     public static String QUEUE_EMPTY = "TXNMGRTEST.EMPTY";
 
     @BeforeEach
-    public void setUp () throws Exception {
+    public void setUp (@TempDir Path deployDir) throws Exception {
         sp = SpaceFactory.getSpace("tspace:txnmgrtest");
-        q2 = new Q2("build/resources/test/org/jpos/transaction");
+        Files.copy(Paths.get("build/resources/test/org/jpos/transaction"), deployDir, REPLACE_EXISTING);
+        q2 = new Q2(deployDir.toString());
         q2.start();
     }
 //    public void testSimpleTransaction() {
@@ -58,9 +66,18 @@ public class TransactionManagerTestCase {
         ctx.put("persistent", "jumped over the lazy empty dog", true);
         sp.out(QUEUE_EMPTY, ctx);
     }
+
+    @Test
+    public void testFastAbort() {
+        Context ctx = new Context();
+        ctx.put("volatile", "the quick brown fox");
+        ctx.put("persistent", "jumped over the lazy dog", true);
+        sp.out(QUEUE, ctx);
+    }
+
     @AfterEach
     public void tearDown() throws Exception {
-        Thread.sleep (5000); // let the thing run
-        q2.stop();
+        Thread.sleep(5000);
+        q2.shutdown(true);
     }
 }

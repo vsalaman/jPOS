@@ -385,16 +385,15 @@ public class TransactionManager
                         evt.addMessage("WARNING: IN-TRANSIT TOO HIGH");
                     }
                     evt.addMessage (
-                        String.format (" in-transit=%d, head=%d, tail=%d, paused=%d, outstanding=%d, active-sessions=%d/%d, %s, elapsed=%dms",
-                            getInTransit(), head, tail, pausedCounter.get(), getOutstandingTransactions(),
-                            getActiveSessions(), maxSessions,
-                            tps.toString(), prof != null ? prof.getElapsedInMillis() : -1
+                        String.format (" %s, elapsed=%dms",
+                            tmInfo(),
+                            prof != null ? prof.getElapsedInMillis() : -1
                         )
                     );
                     if (prof != null)
                         evt.addMessage (prof);
                     try {
-                        Logger.log(new FrozenLogEvent(evt));
+                        Logger.log(freeze(context, evt, prof));
                     } catch (Throwable t) {
                         getLog().error(t);
                     }
@@ -504,12 +503,7 @@ public class TransactionManager
 
     @Override
     public void dump (PrintStream ps, String indent) {
-        ps.printf ("%sin-transit=%d/%d, head=%d, tail=%d, paused=%d, outstanding=%d, active-sessions=%d/%d%s%n",
-          indent,
-          getActiveTransactions(), getInTransit(), head, tail, pausedCounter.get(), getOutstandingTransactions(),
-          getActiveSessions(), maxSessions,
-          (tps != null ? ", " + tps.toString() : "")
-        );
+        ps.printf ("%s%s%n", indent, tmInfo());
         if (metrics != null) {
             metrics.dump(ps, indent);
         }
@@ -795,7 +789,7 @@ public class TransactionManager
             if (QFactory.isEnabled(el)) {
                 group.add(createParticipant(el));
             } else {
-                getLog().warn ("participant ignored (enabled='" + QFactory.getEnabledAttribute(e) + "'): " + el.getAttributeValue("class") + "/" + el.getAttributeValue("realm"));
+                getLog().warn ("participant ignored (enabled='" + QFactory.getEnabledAttribute(el) + "'): " + el.getAttributeValue("class") + "/" + el.getAttributeValue("realm"));
             }
         }
         return group;
@@ -992,6 +986,20 @@ public class TransactionManager
         }
     }
 
+    /**
+     * This method gives the opportunity to decorate a LogEvent right before
+     * it gets logged. When overriding it, unless you know what you're doing,
+     * you should return a FrozenLogEvent in order to prevent concurrency issues.
+     *
+     * @param context current Context
+     * @param evt current LogEvent
+     * @param prof profiler (may be null)
+     * @return FrozenLogEvent
+     */
+    protected FrozenLogEvent freeze(Serializable context, LogEvent evt, Profiler prof) {
+        return new FrozenLogEvent(evt);
+    }
+
     public static class PausedMonitor extends TimerTask {
         Pausable context;
         public PausedMonitor (Pausable context) {
@@ -1002,7 +1010,7 @@ public class TransactionManager
         public void run() {
             cancel();
             PausedTransaction paused = context.getPausedTransaction();
-            if (paused.getTransactionManager().abortOnPauseTimeout)
+            if (paused != null && paused.getTransactionManager().abortOnPauseTimeout)
                 paused.forceAbort();
             context.resume();
         }
@@ -1121,5 +1129,13 @@ public class TransactionManager
     private String getName(TransactionParticipant p) {
         String name;
         return ((name = names.get(p)) != null) ? name : p.getClass().getName();
+    }
+
+    private String tmInfo() {
+        return String.format ("in-transit=%d/%d, head=%d, tail=%d, paused=%d, outstanding=%d, active-sessions=%d/%d%s",
+          getActiveTransactions(), getInTransit(), head, tail, pausedCounter.get(), getOutstandingTransactions(),
+          getActiveSessions(), maxSessions,
+          (tps != null ? ", " + tps.toString() : "")
+        );
     }
 }

@@ -3,7 +3,7 @@ buildscript {
         mavenCentral()
     }
     dependencies {
-        classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:4.3.1'
+        classpath 'biz.aQute.bnd:biz.aQute.bnd.gradle:5.1.2'
         classpath 'org.owasp:dependency-check-gradle:5.3.2.1'
     }
 }
@@ -28,6 +28,7 @@ dependencies {
     implementation libraries.jdbm
     implementation libraries.sleepycat_je
     implementation libraries.sshd
+    implementation libraries.eddsa
 
     testImplementation libraries.commons_lang3
     testImplementation libraries.hamcrest

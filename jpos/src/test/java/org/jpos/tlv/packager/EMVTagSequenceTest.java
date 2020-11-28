@@ -18,14 +18,12 @@
 
 package org.jpos.tlv.packager;
 
-import org.jpos.emv.EMVStandardTagType;
-import org.jpos.emv.EMVTagSequence;
-import org.jpos.emv.LiteralEMVTag;
-import org.jpos.emv.UnknownTagNumberException;
+import org.jpos.emv.*;
 import org.jpos.iso.ISOException;
 import org.jpos.iso.ISOMsg;
 import org.jpos.iso.ISOUtil;
 import org.jpos.iso.packager.GenericPackager;
+import org.jpos.iso.packager.ISO87BPackager;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -53,6 +51,8 @@ public class EMVTagSequenceTest {
 
         tagValueSequence.add(new LiteralEMVTag(EMVStandardTagType.TRANSACTION_CURRENCY_CODE_0x5F2A, "840"));
 
+        tagValueSequence.add(new LiteralEMVTag(EMVStandardTagType.AMOUNT_AUTHORISED_NUMERIC_0x9F02, "000000000100"));
+
         ISOMsg field48 = new ISOMsg(48);
 
         tagValueSequence.writeTo(field48);
@@ -78,8 +78,8 @@ public class EMVTagSequenceTest {
         byte[] field48Packed = new byte[packed.length - 12];
         System.arraycopy(packed, 12, field48Packed, 0, field48Packed.length);
 
-        Assertions.assertEquals(29, field48Packed.length, "Pack error");
-        Assertions.assertEquals("3032365a08999999123456789f9f12044a504f53500251325f2a020840", ISOUtil.byte2hex(field48Packed), "Pack error");
+        Assertions.assertEquals(38, field48Packed.length, "Pack error");
+        Assertions.assertEquals("3033355a08999999123456789f9f12044a504f53500251325f2a0208409f0206000000000100", ISOUtil.byte2hex(field48Packed), "Pack error");
 
         msg = new ISOMsg();
         packager.unpack(msg, packed);
@@ -89,7 +89,7 @@ public class EMVTagSequenceTest {
         tagValueSequence = new EMVTagSequence();
         tagValueSequence.readFrom((ISOMsg) msg.getComponent(48));
 
-        Assertions.assertEquals(4, tagValueSequence.getAll().size(), "Unpack error");
+        Assertions.assertEquals(5, tagValueSequence.getAll().size(), "Unpack error");
 
         String tag1 = EMVStandardTagType.APPLICATION_PRIMARY_ACCOUNT_NUMBER_0x5A.getTagNumberHex();
         LiteralEMVTag pan = (LiteralEMVTag) tagValueSequence.getFirst(tag1);
@@ -107,15 +107,34 @@ public class EMVTagSequenceTest {
         LiteralEMVTag currency = (LiteralEMVTag) tagValueSequence.getFirst(tag4);
         Assertions.assertEquals("840", currency.getValue(), "Unpack error");
 
+        String tag5 = EMVStandardTagType.AMOUNT_AUTHORISED_NUMERIC_0x9F02.getTagNumberHex();
+        LiteralEMVTag amount = (LiteralEMVTag) tagValueSequence.getFirst(tag5);
+        Assertions.assertEquals("100", amount.getValue(), "Unpack error");
+
         packed = packager.pack(msg);
 
         //skip 4 byte MTI and 8 byte Primary BitMap
         field48Packed = new byte[packed.length - 12];
         System.arraycopy(packed, 12, field48Packed, 0, field48Packed.length);
 
-        Assertions.assertEquals(29, field48Packed.length, "Pack error");
+        Assertions.assertEquals(38, field48Packed.length, "Pack error " + ISOUtil.hexString(field48Packed));
 
-        Assertions.assertEquals("3032365a08999999123456789f9f12044a504f53500251325f2a020840", ISOUtil.byte2hex(field48Packed), "Pack error");
+        Assertions.assertEquals("3033355a08999999123456789f9f12044a504f53500251325f2a0208409f0206000000000100", ISOUtil.byte2hex(field48Packed), "Pack error");
     }
 
+    @Test
+    public void testARPC() throws ISOException, FileNotFoundException {
+        String arpcResponse = "283f473f613b3f3f0012";
+        ISOMsg m = new ISOMsg();
+        ISOMsg field55 = new ISOMsg(48);
+        EMVTagSequence field55Tags = new EMVTagSequence();
+        byte[] arpc = ISOUtil.hex2byte(arpcResponse);
+        field55Tags.add(new BinaryEMVTag(EMVStandardTagType.ISSUER_AUTHENTICATION_DATA_0x91, arpc));
+        field55Tags.writeTo(field55);
+        m.set(field55);
+        m.dump (System.out, "");
+        GenericPackager packager = new GenericPackager(new FileInputStream("build/resources/test/org/jpos/tlv/emv-tlv-packager.xml"));
+        m.setPackager(packager);
+        System.out.printf(ISOUtil.hexdump (m.pack()));
+    }
 }

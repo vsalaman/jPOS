@@ -31,7 +31,10 @@ import java.util.regex.Pattern;
 public class Environment implements Loggeable {
     private static final String SYSTEM_PREFIX = "sys";
     private static final String ENVIRONMENT_PREFIX = "env";
-    private static Pattern valuePattern = Pattern.compile("^([\\w\\W]*)(\\$)([\\w\\W]*)?\\{([\\w\\W]+)\\}([\\w\\W]*)$");
+
+    private static Pattern valuePattern = Pattern.compile("^(.*)(\\$)([\\w]*)\\{([-\\w.]+)(:(.+?))?\\}(.*)$");
+    // make groups easier to read :-)                       11112222233333333   444444444455666665    7777
+
     private static Pattern verbPattern = Pattern.compile("^\\$verb\\{([\\w\\W]+)\\}$");
     private static Environment INSTANCE;
     private String name;
@@ -39,7 +42,7 @@ public class Environment implements Loggeable {
     private static String SP_PREFIX = "system.property.";
     private static int SP_PREFIX_LENGTH = SP_PREFIX.length();
     private String errorString;
-
+    private ServiceLoader<EnvironmentProvider> serviceLoader;
 
     static {
         try {
@@ -54,6 +57,7 @@ public class Environment implements Loggeable {
         name = System.getProperty ("jpos.env");
         name = name == null ? "default" : name;
         readConfig ();
+        serviceLoader = ServiceLoader.load(EnvironmentProvider.class);
     }
 
     public String getName() {
@@ -123,22 +127,36 @@ public class Environment implements Loggeable {
                     default:
                         if (gPrefix.length() == 0) {
                             r = System.getenv(gValue); // ENV has priority
+                            r = r == null ? System.getenv(gValue.replace('.', '_').toUpperCase()) : r;
                             r = r == null ? System.getProperty(gValue) : r; // then System.property
                             r = r == null ? propRef.get().getProperty(gValue) : r; // then jPOS --environment
                         } else {
                             return s; // do nothing - unknown prefix
                         }
                 }
+
+                if (r == null) {
+                    String defValue = m.group(6);
+                    if (defValue != null)
+                        r = defValue;
+                }
+
                 if (r != null) {
                     if (m.group(1) != null) {
                         r = m.group(1) + r;
                     }
-                    if (m.group(5) != null)
-                        r = r + m.group(5);
+                    if (m.group(7) != null)
+                        r = r + m.group(7);
                     m = valuePattern.matcher(r);
                 }
                 else
                     m = null;
+            }
+        }
+        for (EnvironmentProvider p : serviceLoader) {
+            int l = p.prefix().length();
+            if (r != null && r.length() > l && r.startsWith(p.prefix())) {
+                r = p.get(r.substring(l));
             }
         }
         return r;
@@ -151,6 +169,7 @@ public class Environment implements Loggeable {
                 readCfg();
 
             extractSystemProperties();
+            propRef.get().put ("jpos.env", name);
         }
     }
 
@@ -172,7 +191,7 @@ public class Environment implements Loggeable {
                 Yaml yaml = new Yaml();
                 Iterable<Object> document = yaml.loadAll(fis);
                 document.forEach(d -> {
-                    flat(properties, null, (Map<String, Object>) d);
+                    flat(properties, null, (Map<String, Object>) d, false);
                 });
                 propRef.set(properties);
                 return true;
@@ -201,14 +220,15 @@ public class Environment implements Loggeable {
     }
 
     @SuppressWarnings("unchecked")
-    private void flat (Properties properties, String prefix, Map<String,Object> c) {
+    public static void flat (Properties properties, String prefix, Map<String,Object> c, boolean dereference) {
         for (Object o : c.entrySet()) {
             Map.Entry<String,Object> entry = (Map.Entry<String,Object>) o;
             String p = prefix == null ? entry.getKey() : (prefix + "." + entry.getKey());
             if (entry.getValue() instanceof Map) {
-                flat(properties, p, (Map) entry.getValue());
+                flat(properties, p, (Map) entry.getValue(), dereference);
             } else {
-                properties.put (p, "" + entry.getValue());
+                Object obj = entry.getValue();
+                properties.put (p, "" + (dereference && obj instanceof String ? Environment.get((String) obj) : entry.getValue()));
             }
         }
     }
@@ -227,11 +247,27 @@ public class Environment implements Loggeable {
     public String toString() {
         StringBuilder sb = new StringBuilder();
         if (name != null) {
-            sb.append(String.format("jpos.env=%s%n", name));
+            sb.append(String.format("[%s]%n", name));
             Properties properties = propRef.get();
             properties.stringPropertyNames().stream().
-              forEachOrdered(prop -> { sb.append(String.format ("  %s=%s%n", prop, properties.getProperty(prop)));
-              });
+              forEachOrdered(prop -> {
+                  String s = properties.getProperty(prop);
+                  String ds = Environment.get(String.format("${%s}", prop)); // de-referenced string
+                  boolean differ = !s.equals(ds);
+                  sb.append(String.format ("  %s=%s%s%n",
+                    prop,
+                    s,
+                    differ ? " (*)" : ""
+                  )
+              );
+            });
+            if (serviceLoader.iterator().hasNext()) {
+                sb.append ("  providers:");
+                sb.append (System.lineSeparator());
+                for (EnvironmentProvider provider : serviceLoader) {
+                    sb.append(String.format("    %s%n", provider.getClass().getCanonicalName()));
+                }
+            }
         }
         return sb.toString();
     }

@@ -22,7 +22,6 @@ package org.jpos.q2;
 import org.jdom2.Element;
 import org.jpos.core.*;
 import org.jpos.q2.qbean.QConfig;
-import org.jpos.rc.Result;
 import org.jpos.util.LogSource;
 import org.jpos.util.Logger;
 import org.jpos.util.NameRegistrar;
@@ -167,16 +166,8 @@ public class QFactory {
     }
 
     public void startQBean (Q2 server, ObjectName objectName)
-        throws ClassNotFoundException, 
-               InstantiationException,
-               IllegalAccessException,
-               MalformedObjectNameException,
-               MalformedURLException,
-               InstanceAlreadyExistsException,
-               InstanceNotFoundException,
+        throws InstanceNotFoundException,
                MBeanException,
-               NotCompliantMBeanException,
-               InvalidAttributeValueException,
                ReflectionException
     {
         MBeanServer mserver = server.getMBeanServer();
@@ -184,16 +175,8 @@ public class QFactory {
     }
 
     public void destroyQBean (Q2 server, ObjectName objectName, Object obj)
-        throws ClassNotFoundException, 
-               InstantiationException,
-               IllegalAccessException,
-               MalformedObjectNameException,
-               MalformedURLException,
-               InstanceAlreadyExistsException,
-               InstanceNotFoundException,
+        throws InstanceNotFoundException,
                MBeanException,
-               NotCompliantMBeanException,
-               InvalidAttributeValueException,
                ReflectionException
     {
         MBeanServer mserver = server.getMBeanServer();
@@ -304,6 +287,8 @@ public class QFactory {
      */
     public String getAttributeName(String name)
     {
+        if (name == null)
+            throw new NullPointerException("attribute name can not be null");
         StringBuilder tmp = new StringBuilder(name);
         if (tmp.length() > 0)
             tmp.setCharAt(0,name.toUpperCase().charAt(0)) ;

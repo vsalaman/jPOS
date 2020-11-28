@@ -18,6 +18,8 @@
 
 package org.jpos.util;
 
+import static org.apache.commons.lang3.JavaVersion.JAVA_14;
+import static org.apache.commons.lang3.SystemUtils.isJavaVersionAtMost;
 import static org.jpos.util.LogFileTestUtils.getStringFromCompressedFile;
 import static org.jpos.util.LogFileTestUtils.getStringFromFile;
 import static org.junit.jupiter.api.Assertions.*;
@@ -38,16 +40,22 @@ import org.jpos.core.Configuration;
 import org.jpos.core.ConfigurationException;
 import org.jpos.core.SimpleConfiguration;
 import org.jpos.core.SubConfiguration;
-import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class DailyLogListenerTest {
 
-    private final LogRotationTestDirectory logRotationTestDirectory = new LogRotationTestDirectory();
+    private LogRotationTestDirectory logRotationTestDirectory;
+
+    @BeforeEach
+    public void createLogRotateAbortsTestDir(@TempDir Path tempDir) {
+        logRotationTestDirectory = new LogRotationTestDirectory(tempDir);
+    }
 
     @Test
-    public void testCheckSize() throws Throwable {
+    public void testCheckSize() {
         DailyLogListener dailyLogListener = new DailyLogListener();
         dailyLogListener.checkSize();
         assertNull(dailyLogListener.f, "dailyLogListener.f");
@@ -77,7 +85,11 @@ public class DailyLogListenerTest {
             dailyLogListener.closeCompressedOutputStream(null);
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.io.OutputStream.close()\" because \"os\" is null", ex.getMessage(), "ex.getMessage()");
+            }
         }
     }
 
@@ -166,7 +178,11 @@ public class DailyLogListenerTest {
             dailyLogListener.logDebugEx("testDailyLogListenerMsg", null);
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"java.lang.Throwable.printStackTrace(java.io.PrintStream)\" because \"e\" is null", ex.getMessage(), "ex.getMessage()");
+            }
             assertNotNull(dailyLogListener.p, "dailyLogListener.p");
         }
     }
@@ -229,7 +245,11 @@ public class DailyLogListenerTest {
             dailyLogListener.setConfiguration(cfg);
             fail("Expected NullPointerException to be thrown");
         } catch (NullPointerException ex) {
-            assertNull(ex.getMessage(), "ex.getMessage()");
+            if (isJavaVersionAtMost(JAVA_14)) {
+                assertNull(ex.getMessage(), "ex.getMessage()");
+            } else {
+                assertEquals("Cannot invoke \"org.jpos.core.Configuration.getLong(String, long)\" because \"this.cfg\" is null", ex.getMessage(), "ex.getMessage()");
+            }
             assertNull(dailyLogListener.rotate, "dailyLogListener.rotate");
             assertEquals(131072, dailyLogListener.getCompressionBufferSize(), "dailyLogListener.getCompressionBufferSize()");
             assertNotNull(dailyLogListener.p, "dailyLogListener.p");
@@ -432,14 +452,14 @@ public class DailyLogListenerTest {
 		Thread.sleep(1000); // to allow compressor thread to run
 		listener.destroy();
 		String date = new SimpleDateFormat("yyyy-MM-dd").format(new Date());
-		File archiveFile = logRotationTestDirectory.getFile(logFileName + ".log." + date + ".gz");
-		assertFalse(archiveFile.exists(), "Archive file should not exist");
+		Path archiveFile = logRotationTestDirectory.getFile(logFileName + ".log." + date + ".gz");
+		assertFalse(Files.exists(archiveFile), "Archive file should not exist");
 	}
 
-    private DailyLogListener createCompressingDailyLogListenerWithIsoDateFormat(String logFileName) throws ConfigurationException {
+    private DailyLogListener createCompressingDailyLogListenerWithIsoDateFormat(String logFileName) throws ConfigurationException, IOException {
         DailyLogListener listener = new DailyLogListener();
         Properties configuration = new Properties();
-        configuration.setProperty("prefix", logRotationTestDirectory.getDirectory().getAbsolutePath() + "/" + logFileName);
+        configuration.setProperty("prefix", logRotationTestDirectory.getDirectory().toAbsolutePath() + "/" + logFileName);
         configuration.setProperty("date-format", ".yyyy-MM-dd");
         configuration.setProperty("compression-format", "gzip");
         configuration.setProperty("maxsize", "1000000");
@@ -449,14 +469,9 @@ public class DailyLogListenerTest {
     }
 
 	private File createEmptyFile(String fileName) throws IOException {
-		File emptyFile = new File(logRotationTestDirectory.getDirectory().getAbsolutePath() + "/" + fileName);
+		File emptyFile = new File(logRotationTestDirectory.getDirectory().toAbsolutePath() + "/" + fileName);
 		emptyFile.getParentFile().mkdirs();
 		emptyFile.createNewFile();
 		return emptyFile;
 	}
-
-    @AfterEach
-    public void cleanupLogRotateAbortsTestDir() {
-        logRotationTestDirectory.delete();
-    }
 }
